@@ -16,7 +16,7 @@ def pretty_print_POST(req):
         req.body,
     ))
 
-r=requests.Request("GET", "https://mackerel-star-civet.ngrok-free.app/koa-access-control-gate-cards/gate/asdsadasd", headers={"Authorization": "Basic db383e06709d9c823e72be8e7520e3bb"})
+r=requests.Request("GET", "*************", headers={"Authorization": "******************"})
 prepared = r.prepare()
 
 pretty_print_POST(prepared)
