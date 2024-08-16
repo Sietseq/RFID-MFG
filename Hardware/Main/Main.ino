@@ -1,94 +1,177 @@
-// Pin numbers
-int ledPinGreen = 25;
-int ledPinRed = 24;
-int buzzer = 23;
+int relay = 23;
+int buzzer = 18;
 
-// Will be used to either check RFID or check WiFi
-boolean sentRequest = false;
+#include "pitches.h"
+#include <Ticker.h>
+
+
+// ========================= MELODY DATA ===========================
+int wifiMelody[] = {
+  NOTE_C5, NOTE_G5, NOTE_C6
+};
+
+int wifiNoteDurations[] = {
+  4, 8, 4
+};
+
+int tagScanMelody[] = {
+  NOTE_C6
+};
+
+int tagScanNoteDurations[] = {
+  3
+};
+
+int successMelody[] = {
+  NOTE_C5, NOTE_E5, NOTE_G5
+};
+
+int successNoteDurations[] = {
+  8, 8, 4
+};
+
+int failMelody[] = {
+  NOTE_G4, NOTE_E4
+};
+
+int failNoteDurations[] = {
+  4, 2
+};
+
+
+// ======================= END MELODY DATA ===========================
+
+
+/*
+  Watch dog is used to restart ESP in case of any issues.
+*/
+Ticker secondTick;
+volatile int watchDogCount = 0;
+void ISRwatchdog(){
+  watchDogCount++;
+  if (watchDogCount == 20){
+    Serial.println("The watchdog bites");
+    abort();
+  }
+}
 
 void setup(void) 
-{
-  // Set up pins and start up modules. 
+{ 
+  // Start serial
   Serial.begin(9600);
-  while(!Serial){};
-  pinMode(ledPinGreen, OUTPUT);
-  pinMode(ledPinRed, OUTPUT);
-  pinMode(buzzer, OUTPUT);
-  WiFi_start_up();
-  RFID_start_up();
 
-  // Showcase start
-  digitalWrite(ledPinGreen, HIGH);
-  digitalWrite(ledPinRed, HIGH);
+  // Delay for serial to start
   delay(1000);
-  digitalWrite(ledPinGreen, LOW);
-  digitalWrite(ledPinRed, LOW);
+
+  // Just to see if the program has start
+  Serial.println("Hello world");
+
+  // Set pin 23 to output
+  pinMode(relay, OUTPUT);
+
+  // Set the led pin to output
+  pinMode(2, OUTPUT);
+
+  // Wait for serial to be ready
+  while(!Serial){};
+
+  // Start up modules
+  RFID_start_up();
+  WiFi_start_up();
+
+  // Start up jingle
+  for (int thisNote = 0; thisNote < 3; thisNote++) {
+    int noteDuration = 1000 / wifiNoteDurations[thisNote];
+    tone(buzzer, wifiMelody[thisNote], noteDuration);
+
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    noTone(buzzer);
+  }
+
+  // If everything successful set the built in LED
+  digitalWrite(2, HIGH);
+
+  // Setup watchdog
+  secondTick.attach(1, ISRwatchdog);
 }
 
 void loop(void) 
 {
-  // If not done automatically had an issue with connecting to WiFi.
-  String data = WiFi_scan();
 
-  // If we are expecting a database response.
-  if (sentRequest){
-    // Show output based on access.
-    if (data == "1")
-    {
-      digitalWrite(ledPinGreen, HIGH);
-      delay(1000);
-      digitalWrite(ledPinGreen, LOW);
-      sentRequest = false;
-    }
-    else if (data == "0")
-    {
-      digitalWrite(ledPinRed, HIGH);
-      delay(1000);
-      digitalWrite(ledPinRed, LOW);
-      sentRequest = false;
-    }
-    else if (data == "-1"){
-      digitalWrite(ledPinRed, HIGH);
-      delay(1000);
-      digitalWrite(ledPinRed, LOW);
-      sentRequest = false;
-    }
-    
-  }
+  // Scan for Tag
+  String result = RFID_scan();
 
-  // If not expecting, scan RFID
-  else
-  {
-    String result = RFID_scan();
-    if (result != "")
+  if (result != "")
     {
-      // Uncomment if want to read serial data.
-      //Serial.println(result);
 
-      // Buzzer
-      digitalWrite(buzzer, HIGH);
-      delay(200);
-      digitalWrite(buzzer, LOW);
-      delay(200);
-      digitalWrite(buzzer, HIGH);
-      delay(200);
-      digitalWrite(buzzer, LOW);
+      // Scan jingle 
+      for (int thisNote = 0; thisNote < 1; thisNote++) {
+        int noteDuration = 1000 / tagScanNoteDurations[thisNote];
+        tone(buzzer, tagScanMelody[thisNote], noteDuration);
+
+        int pauseBetweenNotes = noteDuration * 1.30;
+        delay(pauseBetweenNotes);
+        noTone(buzzer);
+      }
+
 
       // Send Request
-      bool okay_request = send_request(result);
-      // No connection made
-      if (!okay_request){
-        digitalWrite(ledPinGreen, HIGH);
-        digitalWrite(ledPinRed, HIGH);
-        delay(1000);
-        digitalWrite(ledPinGreen, LOW);
-        digitalWrite(ledPinRed, LOW);
-        sentRequest = false;
-      }
-      sentRequest = true;
-    }
-  }
-  
+      try{
+        int API_result = send_request(result);
+        watchDogCount = 0;
+        Serial.println(API_result);
+        // Show output based on access.
+        if (API_result == 200)
+        {
+          // Success jingle
+          for (int thisNote = 0; thisNote < 3; thisNote++) {
+            int noteDuration = 1000 / successNoteDurations[thisNote];
+            tone(buzzer, successMelody[thisNote], noteDuration);
 
+            int pauseBetweenNotes = noteDuration * 1.30;
+            delay(pauseBetweenNotes);
+            noTone(buzzer);
+          }
+          Serial.println("Access!");
+          digitalWrite(relay, HIGH);
+          delay(500);
+          digitalWrite(relay, LOW);
+        }
+        else if (API_result == 400)
+        {
+          // Fail jingle
+          for (int thisNote = 0; thisNote < 2; thisNote++) {
+            int noteDuration = 1000 / failNoteDurations[thisNote];
+            tone(buzzer, failMelody[thisNote], noteDuration);
+
+            int pauseBetweenNotes = noteDuration * 1.30;
+            delay(pauseBetweenNotes);
+            noTone(buzzer);
+          }
+          Serial.println("No access!");
+        }
+        else{
+          Serial.print("Error code:");
+          // Fail jingle
+          for (int thisNote = 0; thisNote < 2; thisNote++) {
+            int noteDuration = 1000 / failNoteDurations[thisNote];
+            tone(buzzer, failMelody[thisNote], noteDuration);
+
+            int pauseBetweenNotes = noteDuration * 1.30;
+            delay(pauseBetweenNotes);
+            noTone(buzzer);
+          }
+          Serial.println(API_result);
+        }
+      }
+      catch (String error){
+        Serial.println(error);
+      }
+
+      
+  }
+  watchDogCount = 0;
   delay(1000);
+  check_disconnect();
 }

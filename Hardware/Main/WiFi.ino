@@ -1,47 +1,49 @@
 // Include the necessary libraries for Wi-Fi management and HTTP communication
-#include "WiFiC3.h"
-#include "WiFiClient.h"
-#include "IPAddress.h"
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <IPAddress.h>
+#include <HTTPClient.h>
 
 // Define the credentials of the Wi-Fi network to connect to
-char ssid[] = "MFG-Internal";  // Network SSID
-char pass[] = "Ft9chxvxW7";  // Network password
+const char* ssid = "****************";  // Network SSID
+const char* pass = "**********";    // Network password
 
-// Define a variable for storing the status of the Wi-Fi connection
-int status = WL_IDLE_STATUS;
 
 // Define the server to which we'll connect
-char server[] = "192.168.24.39";
+String serverName = "****************************";
 
 // Initialize the Wi-Fi client object
 WiFiClient client;
 
+void check_disconnect(){
+  if ((WiFi.status() != WL_CONNECTED)) {
+    Serial.print(millis());
+    Serial.println("Reconnecting to WiFi...");
+    WiFi.disconnect();
+    WiFi_start_up();
+  }
+}
+
 void WiFi_start_up() {
-  // Ucoment if you are debugging
-  //while (!Serial) {}
-
-  // Check for the onboard Wi-Fi module
-  if (WiFi.status() == WL_NO_MODULE) {
-    Serial.println("- Communication with Wi- Fi module failed!");
-    while (true);
-  }
-
-  // Check if the Wi-Fi module's firmware is up to date
-  String fv = WiFi.firmwareVersion();
-  if (fv < WIFI_FIRMWARE_LATEST_VERSION) {
-    Serial.println("- Please upgrade the firmware!");
-  }
-
   // Attempt to connect to the defined Wi-Fi network
+  Serial.print("- Attempting to connect to SSID: ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, pass);
+
+  int count = 0;
+
   // Wait for the connection to be established
-  while (status != WL_CONNECTED) {
-    Serial.print("- Attempting to connect to SSID: ");
-    Serial.println(ssid);
-    status = WiFi.begin(ssid, pass);
-    delay(10000); 
+  while ((WiFi.status() != WL_CONNECTED)) {
+    count++;
+    if (count > 20){
+      abort();
+    }
+    delay(1000);
+    Serial.print(".");
   }
 
-  // Print the Wi-Fi connection status
+  Serial.println("\n- Connected to Wi-Fi network");
   printWifiStatus(); 
 }
 
@@ -52,54 +54,57 @@ void printWifiStatus() {
   Serial.println(WiFi.SSID());
 
   // Print board's IP address
-  IPAddress ip = WiFi.localIP();
   Serial.print("- IP Address: ");
-  Serial.println(ip);
+  Serial.println(WiFi.localIP());
 
   // Print signal strength
-  long rssi = WiFi.RSSI();
-  Serial.print("- Signal strength (RSSI):");
-  Serial.print(rssi);
+  Serial.print("- Signal strength (RSSI): ");
+  Serial.print(WiFi.RSSI());
   Serial.println(" dBm");
 }
 
-// This function returns a string from what the network received.
-String read_response() {
-  String data = "";
-  while (client.available()) {
-
-    // Actual data reception
-    char c = client.read();
-
-    // Print data to serial port
-    data += c;
-  }
-  return data;
-}
 
 // This functions sends a request to the server given an ID.
-bool send_request(String id){
-  bool success = false;
-  if (status == WL_CONNECTED){
-    Serial.println("\n- Starting connection to server...");
-    if (client.connect(server, 3000)) {
-      Serial.println("- Connected to server!");
-      client.println("GET /" + id + " HTTP/1.1");
-      client.println("Connection: close");
-      client.println();
-      success = true;
-    } else {
-      Serial.println("- Connection failed!");
+int send_request(String id){
+  int httpResponseCode = 0;
+  //Check WiFi connection status
+    if(WiFi.status()== WL_CONNECTED){
+      HTTPClient http;
+
+      // Takes the website address and appends the id 
+      String serverPath = serverName + id;
+      
+      // Your Domain name with URL path or IP address with path
+      http.begin(serverPath.c_str());
+      http.addHeader("Authorization", "**************************");
+      
+      // If you need Node-RED/server authentication, insert user and password below
+      //http.setAuthorization("REPLACE_WITH_SERVER_USERNAME", "REPLACE_WITH_SERVER_PASSWORD");
+      
+      // Send HTTP GET request
+      watchDogCount = 0;
+      httpResponseCode = http.GET();
+      
+      // If a valid http response print
+      if (httpResponseCode>0) {
+        Serial.print("HTTP Response code: ");
+        Serial.println(httpResponseCode);
+      }
+
+      // If not succesful
+      else {
+        Serial.print("Error code: ");
+        Serial.println(httpResponseCode);
+      }
+      // Free resources
+      http.end();
     }
-  }
-  return success;
+
+    // If disconnected reconnect 
+    else {
+      Serial.println("WiFi Disconnected");
+      Serial.println("Reconnecting to WiFi...");
+    }
+  return httpResponseCode;
 }
 
-// Will take the network data and splice it into what we are interested in.
-String WiFi_scan() {
-  // Read and print the server's response
-  String data = read_response();
-  // In case more fields are to be added use this index. 
-  int index = data.lastIndexOf("permission:");
-  return data.substring(index+11);
-}
