@@ -1,13 +1,12 @@
 int relay = 23;
 int buzzer = 18;
 
-#include "pitches.h"
 #include <Ticker.h>
 
 
 // ========================= MELODY DATA ===========================
 int wifiMelody[] = {
-  NOTE_C5, NOTE_G5, NOTE_C6
+  523, 784, 1047
 };
 
 int wifiNoteDurations[] = {
@@ -15,7 +14,7 @@ int wifiNoteDurations[] = {
 };
 
 int tagScanMelody[] = {
-  NOTE_C6
+  1047
 };
 
 int tagScanNoteDurations[] = {
@@ -23,7 +22,7 @@ int tagScanNoteDurations[] = {
 };
 
 int successMelody[] = {
-  NOTE_C5, NOTE_E5, NOTE_G5
+  523, 659, 784
 };
 
 int successNoteDurations[] = {
@@ -31,13 +30,23 @@ int successNoteDurations[] = {
 };
 
 int failMelody[] = {
-  NOTE_G4, NOTE_E4
+  392, 330
 };
 
 int failNoteDurations[] = {
   4, 2
 };
 
+void playMelody(int notes[], int duration[], int numNotes){
+  for (int thisNote = 0; thisNote < numNotes; thisNote++) {
+    int noteDuration = 1000 / duration[thisNote];
+    tone(buzzer, notes[thisNote], noteDuration);
+
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    noTone(buzzer);
+  }
+}
 
 // ======================= END MELODY DATA ===========================
 
@@ -50,7 +59,7 @@ volatile int watchDogCount = 0;
 void ISRwatchdog(){
   watchDogCount++;
   if (watchDogCount == 20){
-    Serial.println("The watchdog bites");
+    Serial.println(F("The watchdog bites"));
     abort();
   }
 }
@@ -64,7 +73,7 @@ void setup(void)
   delay(1000);
 
   // Just to see if the program has start
-  Serial.println("Hello world");
+  Serial.println(F("Hello world"));
 
   // Set pin 23 to output
   pinMode(relay, OUTPUT);
@@ -79,15 +88,7 @@ void setup(void)
   RFID_start_up();
   WiFi_start_up();
 
-  // Start up jingle
-  for (int thisNote = 0; thisNote < 3; thisNote++) {
-    int noteDuration = 1000 / wifiNoteDurations[thisNote];
-    tone(buzzer, wifiMelody[thisNote], noteDuration);
-
-    int pauseBetweenNotes = noteDuration * 1.30;
-    delay(pauseBetweenNotes);
-    noTone(buzzer);
-  }
+  playMelody(wifiMelody, wifiNoteDurations, 3);
 
   // If everything successful set the built in LED
   digitalWrite(2, HIGH);
@@ -98,23 +99,12 @@ void setup(void)
 
 void loop(void) 
 {
-
   // Scan for Tag
   String result = RFID_scan();
 
   if (result != "")
     {
-
-      // Scan jingle 
-      for (int thisNote = 0; thisNote < 1; thisNote++) {
-        int noteDuration = 1000 / tagScanNoteDurations[thisNote];
-        tone(buzzer, tagScanMelody[thisNote], noteDuration);
-
-        int pauseBetweenNotes = noteDuration * 1.30;
-        delay(pauseBetweenNotes);
-        noTone(buzzer);
-      }
-
+      playMelody(tagScanMelody, tagScanNoteDurations, 1);
 
       // Send Request
       try{
@@ -124,44 +114,21 @@ void loop(void)
         // Show output based on access.
         if (API_result == 200)
         {
-          // Success jingle
-          for (int thisNote = 0; thisNote < 3; thisNote++) {
-            int noteDuration = 1000 / successNoteDurations[thisNote];
-            tone(buzzer, successMelody[thisNote], noteDuration);
-
-            int pauseBetweenNotes = noteDuration * 1.30;
-            delay(pauseBetweenNotes);
-            noTone(buzzer);
-          }
-          Serial.println("Access!");
+          playMelody(successMelody, successNoteDurations, 3);
+          Serial.println(F("Access!"));
           digitalWrite(relay, HIGH);
           delay(500);
           digitalWrite(relay, LOW);
         }
         else if (API_result == 400)
         {
-          // Fail jingle
-          for (int thisNote = 0; thisNote < 2; thisNote++) {
-            int noteDuration = 1000 / failNoteDurations[thisNote];
-            tone(buzzer, failMelody[thisNote], noteDuration);
-
-            int pauseBetweenNotes = noteDuration * 1.30;
-            delay(pauseBetweenNotes);
-            noTone(buzzer);
-          }
-          Serial.println("No access!");
+          playMelody(failNoteDurations, failNoteDurations, 2);
+          Serial.println(F("No access!"));
         }
         else{
-          Serial.print("Error code:");
+          Serial.print(F("Error code:"));
           // Fail jingle
-          for (int thisNote = 0; thisNote < 2; thisNote++) {
-            int noteDuration = 1000 / failNoteDurations[thisNote];
-            tone(buzzer, failMelody[thisNote], noteDuration);
-
-            int pauseBetweenNotes = noteDuration * 1.30;
-            delay(pauseBetweenNotes);
-            noTone(buzzer);
-          }
+          playMelody(failNoteDurations, failNoteDurations, 2);
           Serial.println(API_result);
         }
       }

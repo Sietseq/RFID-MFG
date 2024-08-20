@@ -23,7 +23,7 @@ void RFID_start_up()
   // Get firmware version
   uint32_t versiondata = nfc.getFirmwareVersion();
   if (! versiondata) {
-    Serial.print("Didn't find PN53x board");
+    Serial.print(F("Didn't find PN53x board"));
     while (1); // halt
   }
   
@@ -37,7 +37,7 @@ void RFID_start_up()
   // configure board to read RFID tags
   nfc.SAMConfig();
     
-  Serial.println("Waiting for an ISO14443A card");
+  Serial.println(F("Waiting for an ISO14443A card"));
 }
 
 // Scan and return UID
@@ -58,8 +58,6 @@ String RFID_scan()
     // Loop through each byte and add to string as Hexidecimal 
     for (uint8_t i=0; i < uidLength; i++) 
     {
-      Serial.println(uid[i]);
-
       // Could definetely be refactored here but do not want to break code
       if (uid[i] <10){
         strUID = "0" + String(uid[i], HEX) + strUID;
