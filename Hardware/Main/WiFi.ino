@@ -1,16 +1,14 @@
 // Include the necessary libraries for Wi-Fi management and HTTP communication
 #include <WiFi.h>
-#include <WiFiClientSecure.h>
-#include <IPAddress.h>
 #include <HTTPClient.h>
 
 // Define the credentials of the Wi-Fi network to connect to
-const char* ssid = "****************";  // Network SSID
-const char* pass = "**********";    // Network password
+const char* ssid = "";  // Network SSID
+const char* pass = "";    // Network password
 
 
 // Define the server to which we'll connect
-String serverName = "****************************";
+String serverName = "";
 
 // Initialize the Wi-Fi client object
 WiFiClient client;
@@ -76,10 +74,7 @@ int send_request(String id){
       
       // Your Domain name with URL path or IP address with path
       http.begin(serverPath.c_str());
-      http.addHeader("Authorization", "**************************");
-      
-      // If you need Node-RED/server authentication, insert user and password below
-      //http.setAuthorization("REPLACE_WITH_SERVER_USERNAME", "REPLACE_WITH_SERVER_PASSWORD");
+      http.addHeader("Authorization", "");
       
       // Send HTTP GET request
       watchDogCount = 0;
@@ -87,13 +82,13 @@ int send_request(String id){
       
       // If a valid http response print
       if (httpResponseCode>0) {
-        Serial.print("HTTP Response code: ");
+        Serial.print(" HTTP Response code: ");
         Serial.println(httpResponseCode);
       }
 
       // If not succesful
       else {
-        Serial.print("Error code: ");
+        Serial.print(" Error code: ");
         Serial.println(httpResponseCode);
       }
       // Free resources

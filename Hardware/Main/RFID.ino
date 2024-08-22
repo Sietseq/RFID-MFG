@@ -58,8 +58,6 @@ String RFID_scan()
     // Loop through each byte and add to string as Hexidecimal 
     for (uint8_t i=0; i < uidLength; i++) 
     {
-      Serial.println(uid[i]);
-
       // Could definetely be refactored here but do not want to break code
       if (uid[i] <10){
         strUID = "0" + String(uid[i], HEX) + strUID;
@@ -75,7 +73,8 @@ String RFID_scan()
 
   // If found tag print for debug purposes
   if(strUID != ""){
-    Serial.println(strUID);
+    Serial.println("Scanned: " + strUID);
+    Serial.print("{" + strUID + "}");
   }
 
   // Return ID.

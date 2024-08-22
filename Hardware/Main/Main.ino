@@ -63,9 +63,6 @@ void setup(void)
   // Delay for serial to start
   delay(1000);
 
-  // Just to see if the program has start
-  Serial.println("Hello world");
-
   // Set pin 23 to output
   pinMode(relay, OUTPUT);
 
@@ -120,7 +117,6 @@ void loop(void)
       try{
         int API_result = send_request(result);
         watchDogCount = 0;
-        Serial.println(API_result);
         // Show output based on access.
         if (API_result == 200)
         {
@@ -133,7 +129,7 @@ void loop(void)
             delay(pauseBetweenNotes);
             noTone(buzzer);
           }
-          Serial.println("Access!");
+
           digitalWrite(relay, HIGH);
           delay(500);
           digitalWrite(relay, LOW);
@@ -149,10 +145,8 @@ void loop(void)
             delay(pauseBetweenNotes);
             noTone(buzzer);
           }
-          Serial.println("No access!");
         }
         else{
-          Serial.print("Error code:");
           // Fail jingle
           for (int thisNote = 0; thisNote < 2; thisNote++) {
             int noteDuration = 1000 / failNoteDurations[thisNote];
@@ -162,7 +156,6 @@ void loop(void)
             delay(pauseBetweenNotes);
             noTone(buzzer);
           }
-          Serial.println(API_result);
         }
       }
       catch (String error){
