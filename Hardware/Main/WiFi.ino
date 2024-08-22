@@ -3,12 +3,12 @@
 #include <HTTPClient.h>
 
 // Define the credentials of the Wi-Fi network to connect to
-const char* ssid = "MFG-Internal";  // Network SSID
-const char* pass = "Ft9chxvxW7";    // Network password
+const char* ssid = "";  // Network SSID
+const char* pass = "";    // Network password
 
 
 // Define the server to which we'll connect
-String serverName = "https://api.tidalevents.io/koa-access-control-gate-cards/gate/";
+String serverName = "";
 
 // Initialize the Wi-Fi client object
 WiFiClient client;
@@ -74,7 +74,7 @@ int send_request(String id){
       
       // Your Domain name with URL path or IP address with path
       http.begin(serverPath.c_str());
-      http.addHeader("Authorization", "Basic db383e06709d9c823e72be8e7520e3bb");
+      http.addHeader("Authorization", "");
       
       // If you need Node-RED/server authentication, insert user and password below
       //http.setAuthorization("REPLACE_WITH_SERVER_USERNAME", "REPLACE_WITH_SERVER_PASSWORD");

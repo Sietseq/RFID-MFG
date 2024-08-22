@@ -1,8 +1,8 @@
-int relay = 23;
-int buzzer = 18;
+int relay = 32;
+int buzzer = 33;
 
 #include <Ticker.h>
-
+#include <AnimatedGIF.h>
 
 // ========================= MELODY DATA ===========================
 int wifiMelody[] = {
@@ -51,6 +51,24 @@ void playMelody(int notes[], int duration[], int numNotes){
 // ======================= END MELODY DATA ===========================
 
 
+// ========================= ANIMATION TASK ============================
+
+volatile bool state = false;
+volatile int animation_state = 0;
+void AnimationTask( void * pvParameters ){
+  Serial.print(F("Animation Task running on core "));
+  Serial.println(xPortGetCoreID());
+
+  for(;;){
+    playGif(&state, &animation_state);
+    state = false;
+    delay(50);
+  } 
+}
+
+// =================END OF ANIMATION TASK ==============================
+
+
 /*
   Watch dog is used to restart ESP in case of any issues.
 */
@@ -87,6 +105,7 @@ void setup(void)
   // Start up modules
   RFID_start_up();
   WiFi_start_up();
+  animation_start_up();
 
   playMelody(wifiMelody, wifiNoteDurations, 3);
 
@@ -95,6 +114,16 @@ void setup(void)
 
   // Setup watchdog
   secondTick.attach(1, ISRwatchdog);
+
+  // set up second thread
+  xTaskCreatePinnedToCore(
+                    AnimationTask,   /* Task function. */
+                    "AnimationTask",     /* name of task. */
+                    20000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    NULL,      /* Task handle to keep track of created task */
+                    0);          /* pin task to core 0 */                  
 }
 
 void loop(void) 
@@ -114,6 +143,8 @@ void loop(void)
         // Show output based on access.
         if (API_result == 200)
         {
+          animation_state = 1; 
+          state = true;
           playMelody(successMelody, successNoteDurations, 3);
           Serial.println(F("Access!"));
           digitalWrite(relay, HIGH);
@@ -122,12 +153,15 @@ void loop(void)
         }
         else if (API_result == 400)
         {
+          animation_state = 2; 
+          state = true;
           playMelody(failNoteDurations, failNoteDurations, 2);
           Serial.println(F("No access!"));
         }
         else{
+          animation_state = 2; 
+          state = true;
           Serial.print(F("Error code:"));
-          // Fail jingle
           playMelody(failNoteDurations, failNoteDurations, 2);
           Serial.println(API_result);
         }
