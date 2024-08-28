@@ -78,9 +78,6 @@ int send_request(String id){
       http.begin(serverPath.c_str());
       http.addHeader("Authorization", "**************************");
       
-      // If you need Node-RED/server authentication, insert user and password below
-      //http.setAuthorization("REPLACE_WITH_SERVER_USERNAME", "REPLACE_WITH_SERVER_PASSWORD");
-      
       // Send HTTP GET request
       watchDogCount = 0;
       httpResponseCode = http.GET();
