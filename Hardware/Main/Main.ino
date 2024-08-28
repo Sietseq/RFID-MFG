@@ -1,8 +1,9 @@
-int relay = 32;
-int buzzer = 33;
+int buzzer = 32;
+int ledPin = 33;
 
 #include <Ticker.h>
 #include <AnimatedGIF.h>
+
 
 // ========================= MELODY DATA ===========================
 int wifiMelody[] = {
@@ -30,7 +31,7 @@ int successNoteDurations[] = {
 };
 
 int failMelody[] = {
-  392, 330
+  659, 532
 };
 
 int failNoteDurations[] = {
@@ -60,7 +61,7 @@ void AnimationTask( void * pvParameters ){
   Serial.println(xPortGetCoreID());
 
   for(;;){
-    playGif(&state, &animation_state);
+    playAnimation(&state, &animation_state);
     state = false;
     delay(50);
   } 
@@ -68,10 +69,8 @@ void AnimationTask( void * pvParameters ){
 
 // =================END OF ANIMATION TASK ==============================
 
+// ======================== WATCH DOG ==================================
 
-/*
-  Watch dog is used to restart ESP in case of any issues.
-*/
 Ticker secondTick;
 volatile int watchDogCount = 0;
 void ISRwatchdog(){
@@ -81,6 +80,8 @@ void ISRwatchdog(){
     abort();
   }
 }
+
+// ===================== END OF WATCHDOG ===============================
 
 void setup(void) 
 { 
@@ -93,8 +94,6 @@ void setup(void)
   // Just to see if the program has start
   Serial.println(F("Hello world"));
 
-  // Set pin 23 to output
-  pinMode(relay, OUTPUT);
 
   // Set the led pin to output
   pinMode(2, OUTPUT);
@@ -106,7 +105,8 @@ void setup(void)
   RFID_start_up();
   WiFi_start_up();
   animation_start_up();
-
+  
+  // Play start up melody
   playMelody(wifiMelody, wifiNoteDurations, 3);
 
   // If everything successful set the built in LED
@@ -143,26 +143,26 @@ void loop(void)
         // Show output based on access.
         if (API_result == 200)
         {
+          // When access
           animation_state = 1; 
           state = true;
           playMelody(successMelody, successNoteDurations, 3);
           Serial.println(F("Access!"));
-          digitalWrite(relay, HIGH);
-          delay(500);
-          digitalWrite(relay, LOW);
         }
         else if (API_result == 400)
         {
+          // When no access
           animation_state = 2; 
           state = true;
-          playMelody(failNoteDurations, failNoteDurations, 2);
+          playMelody(failMelody, failNoteDurations, 2);
           Serial.println(F("No access!"));
         }
         else{
+          // When error
           animation_state = 2; 
           state = true;
           Serial.print(F("Error code:"));
-          playMelody(failNoteDurations, failNoteDurations, 2);
+          playMelody(failMelody, failNoteDurations, 2);
           Serial.println(API_result);
         }
       }

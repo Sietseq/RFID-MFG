@@ -1,5 +1,4 @@
-// GIFDraw is called by AnimatedGIF library frame to screen
-
+// =========================== GIF & TFT LIbrariers ========================================
 #define DISPLAY_WIDTH  tft.width()
 #define DISPLAY_HEIGHT tft.height()
 #define BUFFER_SIZE 256            // Optimum is >= GIF width or integral division of width
@@ -16,7 +15,7 @@ bool     dmaBuf = 0;
 // Load GIF library
 AnimatedGIF gif;
 
-// Example AnimatedGIF library images
+// 
 #include "success.h"
 #include "fail.h"
 #include "progress.h"
@@ -28,7 +27,33 @@ AnimatedGIF gif;
 #include <TFT_eSPI.h>
 
 TFT_eSPI tft = TFT_eSPI();
+
+// ==================== END OF TFT DISPLAY LIBRARIES ===========================
+
+// ==================== FAST LED LIBRARIES ====================================
+
+#include "FastLED.h"                                          // FastLED library.
+ 
+#if FASTLED_VERSION < 3001000
+#error "Requires FastLED 3.1 or later; check github for latest code."
+#endif
+ 
+// Fixed definitions cannot change on the fly.
+#define LED_DT 33                                             // Serial data pin
+#define COLOR_ORDER GRB                                       // It's GRB for WS2812B and GBR for APA102
+#define LED_TYPE WS2812                                       // What kind of strip are you using (APA102, WS2801 or WS2812B)?
+#define NUM_LEDS 8                                       // Number of LED's
+
+// Initialize changeable global variables.
+uint8_t max_bright = 125;                                     // Overall brightness definition. It can be changed on the fly.
+ 
+struct CRGB leds[NUM_LEDS];                                   // Initialize our LED array.
+
+// ============== END OF FAST LED LIBRARIES =====================================
+ 
   
+// ====================== DRAWS THE GIF ========================================
+
 // Draw a line of image directly on the LCD
 void GIFDraw(GIFDRAW *pDraw)
 {
@@ -144,7 +169,9 @@ void GIFDraw(GIFDRAW *pDraw)
   }
 } /* GIFDraw() */
 
+// ========================== END OF DRAWING GIF ========================================
 
+// ========================== INITIALIZE ALL LIBRARIES ==================================
 
 void animation_start_up(){
   tft.begin();
@@ -152,10 +179,17 @@ void animation_start_up(){
   tft.fillScreen(TFT_WHITE);
 
   gif.begin(BIG_ENDIAN_PIXELS);
+  LEDS.addLeds<LED_TYPE, LED_DT, COLOR_ORDER>(leds, NUM_LEDS);         // For WS2812B
+ 
+  FastLED.setBrightness(max_bright);
+  FastLED.setMaxPowerInVoltsAndMilliamps(5, 1000);              // FastLED power management set at 5V, 500mA
 }
 
+// ================= END OF INITIALIZING LIBRARIES =======================================
 
-void playGif(volatile bool* state, volatile int* animation_state ){
+
+// ============================= PLAYS ANIMATION =========================================
+void playAnimation(volatile bool* state, volatile int* animation_state ){
 
   // Decide which animation
   const uint8_t *ptrArray;
@@ -178,6 +212,8 @@ void playGif(volatile bool* state, volatile int* animation_state ){
     while (gif.playFrame(true, NULL))
     {
       yield();
+      rainbow_wave(10, 10);                                      // Speed, delta hue values.
+      FastLED.show();
       if (*state != false){
         gif.close();
         tft.endWrite(); // Release TFT chip select for other SPI devices
@@ -189,3 +225,12 @@ void playGif(volatile bool* state, volatile int* animation_state ){
     *animation_state = 0;
   }
 }
+
+void rainbow_wave(uint8_t thisSpeed, uint8_t deltaHue) {     // The fill_rainbow call doesn't support brightness levels.
+ 
+// uint8_t thisHue = beatsin8(thisSpeed,0,255);                // A simple rainbow wave.
+ uint8_t thisHue = beat8(thisSpeed,255);                     // A simple rainbow march.
+  
+ fill_rainbow(leds, NUM_LEDS, thisHue, deltaHue);            // Use FastLED's fill_rainbow routine.
+ 
+} // rainbow_wave()
