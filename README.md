@@ -17,5 +17,14 @@ In the Tools menu change Partition Scheme to Huge App. This gives more space for
 In PN532_HSU.cpp change ```#include "PN532/PN532/PN532_debug.h"``` to ```#include "../PN532/PN532_debug.h"``` \
 In PN532_HSU.h change ```#include "PN532/PN532/PN532Interface.h"``` to ```#include "../PN532/PN532Interface.h"```\
 
+## Wiring
+On the PN532 the following pins should be wired as following:\
+**PN532** -> **ESP32**\
+GDN -> GND\
+VCC -> 5V\
+TXD -> 16\
+RXD -> 17
+<br></br>
 
+The buzzer positive terminal should be wired to pin 18 and the relay to 23.
 
