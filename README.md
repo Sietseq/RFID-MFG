@@ -13,9 +13,9 @@ When in the Arduino IDE install esp32 board by Espressif Systems. When compiling
 In the Tools menu change Partition Scheme to Huge App. This gives more space for sketchs to be stored. 
 
 ## Libraries used 
-**PN532**: [Link](https://github.com/Seeed-Studio/PN532) Only the PN532 and PN532_HSU folders are needed in the ```Arduino/libraries``` directory. You will have to make the following changes in ```PN532_HSU```: \
+**PN532**: [Link](https://github.com/Seeed-Studio/PN532) Only the PN532 and PN532_HSU folders are needed in the ```Arduino/libraries``` directory. You will have to make the following changes in ```PN532_HSU```: \ <br/>
 In PN532_HSU.cpp change ```#include "PN532/PN532/PN532_debug.h"``` to ```#include "../PN532/PN532_debug.h"``` \
 In PN532_HSU.h change ```#include "PN532/PN532/PN532Interface.h"``` to ```#include "../PN532/PN532Interface.h"```\
-\
+
 
 
