@@ -22,7 +22,7 @@ In PN532_HSU.h change ```#include "PN532/PN532/PN532Interface.h"``` to ```#inclu
 ## Wiring
 On the PN532 the following pins should be wired as following:\
 **PN532** -> **ESP32**
----
+***
 GND -> GND\
 VCC -> 5V\
 TXD -> 16\
@@ -30,7 +30,7 @@ RXD -> 17
 <br></br>
 
 **ESP32** -> **USB to TTL**
----
+***
 GND -> GND\
 1 -> RX\
 3 -> TX\
