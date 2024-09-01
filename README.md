@@ -33,19 +33,19 @@ RXD -> 17
 ***
 **Display**
 **Display** -> **ESP32**
-VCC -> 3v3
-GND -> 3v3
-CS -> 15
-RESET -> 4
-D/c -> 2
-SDI(MOSI) -> 23
-SCK -> 18
-LED -> 3v3
+VCC -> 3v3\
+GND -> 3v3\
+CS -> 15\
+RESET -> 4\
+D/c -> 2\
+SDI(MOSI) -> 23\
+SCK -> 18\
+LED -> 3v3\
 
-T_CLK -> 18
-T_CS -> 21
-T_DIN -> 23
-T_DO -> 19
+T_CLK -> 18\
+T_CS -> 21\
+T_DIN -> 23\
+T_DO -> 19\
 
 The buzzer positive terminal should be wired to pin 32 and the relay is not setup in this version.
 
