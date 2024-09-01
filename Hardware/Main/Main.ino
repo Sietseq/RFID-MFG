@@ -3,6 +3,9 @@ int buzzer = 18;
 
 #include "pitches.h"
 #include <Ticker.h>
+#include <ArduinoJson.h>
+
+int incomingByte = 0; // for incoming serial data
 
 
 // ========================= MELODY DATA ===========================
@@ -42,19 +45,21 @@ int failNoteDurations[] = {
 // ======================= END MELODY DATA ===========================
 
 
-/*
-  Watch dog is used to restart ESP in case of any issues.
-*/
+// Watch dog is used to restart ESP in case of any issues.
 Ticker secondTick;
 volatile int watchDogCount = 0;
 void ISRwatchdog(){
   watchDogCount++;
   if (watchDogCount == 20){
-    Serial.println("The watchdog bites");
+        JsonDocument doc;
+      doc["type"] = "log";
+      doc["value"] = "Watchdog called";
+      serializeJson(doc, Serial);
     abort();
   }
 }
 
+// Start code
 void setup(void) 
 { 
   // Start serial
@@ -74,7 +79,6 @@ void setup(void)
 
   // Start up modules
   RFID_start_up();
-  WiFi_start_up();
 
   // Start up jingle
   for (int thisNote = 0; thisNote < 3; thisNote++) {
@@ -100,71 +104,42 @@ void loop(void)
   String result = RFID_scan();
 
   if (result != "")
-    {
-
+  {
+      // Succesfully scanned. Send over serial.
+      JsonDocument doc;
+      doc["type"] = "scan";
+      doc["value"] = result;
+      serializeJson(doc, Serial);
+      
       // Scan jingle 
       for (int thisNote = 0; thisNote < 1; thisNote++) {
         int noteDuration = 1000 / tagScanNoteDurations[thisNote];
         tone(buzzer, tagScanMelody[thisNote], noteDuration);
-
         int pauseBetweenNotes = noteDuration * 1.30;
         delay(pauseBetweenNotes);
         noTone(buzzer);
       }
-
-
-      // Send Request
-      try{
-        int API_result = send_request(result);
-        watchDogCount = 0;
-        // Show output based on access.
-        if (API_result == 200)
-        {
-          // Success jingle
-          for (int thisNote = 0; thisNote < 3; thisNote++) {
-            int noteDuration = 1000 / successNoteDurations[thisNote];
-            tone(buzzer, successMelody[thisNote], noteDuration);
-
-            int pauseBetweenNotes = noteDuration * 1.30;
-            delay(pauseBetweenNotes);
-            noTone(buzzer);
-          }
-
-          digitalWrite(relay, HIGH);
-          delay(500);
-          digitalWrite(relay, LOW);
-        }
-        else if (API_result == 400)
-        {
-          // Fail jingle
-          for (int thisNote = 0; thisNote < 2; thisNote++) {
-            int noteDuration = 1000 / failNoteDurations[thisNote];
-            tone(buzzer, failMelody[thisNote], noteDuration);
-
-            int pauseBetweenNotes = noteDuration * 1.30;
-            delay(pauseBetweenNotes);
-            noTone(buzzer);
-          }
-        }
-        else{
-          // Fail jingle
-          for (int thisNote = 0; thisNote < 2; thisNote++) {
-            int noteDuration = 1000 / failNoteDurations[thisNote];
-            tone(buzzer, failMelody[thisNote], noteDuration);
-
-            int pauseBetweenNotes = noteDuration * 1.30;
-            delay(pauseBetweenNotes);
-            noTone(buzzer);
-          }
-        }
-      }
-      catch (String error){
-        Serial.println(error);
-      }
-
       
   }
+
+  // Always read serial. 
+  while (Serial.available() > 0) {
+    // read the incoming byte:
+    incomingByte = Serial.read();
+
+    // If access or not
+    if (incomingByte == 1){
+      Serial.println("Access");
+      // Set relay
+      digitalWrite(relay, HIGH);
+      delay(500);
+      digitalWrite(relay, LOW);
+    }
+    else{
+      Serial.println("No access");
+    }
+
+  }
   watchDogCount = 0;
-  delay(1000);
-  check_disconnect();
+  delay(500);
 }

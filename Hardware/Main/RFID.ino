@@ -23,7 +23,10 @@ void RFID_start_up()
   // Get firmware version
   uint32_t versiondata = nfc.getFirmwareVersion();
   if (! versiondata) {
-    Serial.print("Didn't find PN53x board");
+    JsonDocument doc;
+    doc["type"] = "log";
+    doc["value"] = "Could not find PN532";
+    serializeJson(doc, Serial);
     while (1); // halt
   }
   
@@ -69,12 +72,6 @@ String RFID_scan()
         strUID = String(uid[i], HEX) + strUID;
       }
     }
-  }
-
-  // If found tag print for debug purposes
-  if(strUID != ""){
-    Serial.println("Scanned: " + strUID);
-    Serial.print("{" + strUID + "}");
   }
 
   // Return ID.
