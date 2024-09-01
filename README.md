@@ -1,7 +1,7 @@
 # RFID MFG
 
 ## Description
-This branch includes the current version at the KOA used for the gates. \
+This branch has some code to add a screen and leds. This should be further developed into a further product. 
 The code is split up into 4 sections:
 1. Main
 2. RFID
