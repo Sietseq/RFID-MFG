@@ -31,8 +31,8 @@ VCC -> 5V\
 TXD -> 16\
 RXD -> 17
 ***
-**Display**
-**Display** -> **ESP32**
+
+**Display** -> **ESP32**\
 VCC -> 3v3\
 GND -> 3v3\
 CS -> 15\
